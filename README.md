@@ -6,9 +6,9 @@
 
 תוסף Chrome עם ממשק בעברית שמציג תמונות מוגדלות בתוך העמוד. HoverView מנסה לבחור מקור ברזולוציה גבוהה יותר כשהאתר חושף אותו, ומאפשר זום, הצמדה, גרירה וסיבוב בלי לאבד את המקום בגלישה.
 
-**[אתר התדמית](https://hoverview.workspace-643146.chatgpt.site)** · **[הורדת הגרסה האחרונה](https://github.com/4pdara/HoverView/releases/latest)** · **[דיווח על תקלה](https://github.com/4pdara/HoverView/issues)**
+**[אתר התדמית](https://4pdara.github.io/HoverView/)** · **[הורדת הגרסה האחרונה](https://github.com/4pdara/HoverView/releases/latest)** · **[דיווח על תקלה](https://github.com/4pdara/HoverView/issues)**
 
-אתר התדמית מאוחסן ב־Sites ומתחיל כתצוגה פרטית לבעלים. קוד האתר המלא נמצא בתיקיית `website/` וניתן לאחסון גם בשרת סטטי אחר. התוסף טרם פורסם בחנות Chrome.
+אתר התדמית מפורסם לציבור ב־GitHub Pages. קוד האתר המלא נמצא בתיקיית `website/`. התוסף טרם פורסם בחנות Chrome.
 
 ## התקנה
 
@@ -102,6 +102,10 @@ python3 -m http.server 8080 --directory website
 <div dir="rtl">
 
 לאחר מכן פתחו `http://localhost:8080`.
+
+## פרסום האתר ב־GitHub Pages
+
+תהליך **Deploy HoverView to GitHub Pages** בונה את קובץ ההורדה, מריץ בדיקות ומפרסם את תיקיית `website/` בכל שינוי רלוונטי שנדחף ל־`main`. אפשר להפעילו גם ידנית דרך Actions. מקור הפרסום בהגדרות Settings → Pages מוגדר ל־GitHub Actions.
 
 ## פרסום גרסה חדשה
 
