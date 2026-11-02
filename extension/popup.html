@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HoverView — הגדרות</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="shared.js" defer></script>
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" width="42" height="42" alt="">
+    <div><h1 dir="ltr">HoverView</h1><p>תמונה קטנה. מבט גדול.</p></div>
+    <span class="version">1.0</span>
+  </header>
+  <main>
+    <section class="activation card">
+      <label class="setting"><span><strong>הגדלת תמונות</strong><small id="globalDescription">מוכנים למעבר העכבר הבא</small></span><input id="enabled" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span></label>
+      <div class="site-row"><label for="siteEnabled"><span>הפעלה באתר הזה</span><small id="siteHost" dir="ltr">בודק את האתר…</small></label><input id="siteEnabled" type="checkbox" role="switch"><span class="switch" aria-hidden="true"></span></div>
+      <p id="siteNotice" class="notice" hidden></p>
+    </section>
+    <section class="card preferences" aria-labelledby="appearanceHeading">
+      <h2 id="appearanceHeading">איך התמונה תופיע?</h2>
+      <label class="range-label" for="delay">השהיה לפני הגדלה <output id="delayValue" for="delay">350 מילישניות</output></label>
+      <input id="delay" type="range" min="0" max="1500" step="50">
+      <label class="range-label" for="maxSize">גודל מרבי מהמסך <output id="maxSizeValue" for="maxSize">80%</output></label>
+      <input id="maxSize" type="range" min="40" max="95" step="5">
+      <div class="select-row"><label for="position">מיקום</label><select id="position"><option value="cursor">ליד העכבר</option><option value="center">במרכז המסך</option></select></div>
+      <div class="select-row"><label for="theme">מראה החלונית</label><select id="theme"><option value="dark">כהה</option><option value="light">בהיר</option></select></div>
+    </section>
+    <section class="card preferences" aria-labelledby="behaviorHeading">
+      <h2 id="behaviorHeading">שליטה והתנהגות</h2>
+      <label class="check-row"><input id="requireAlt" type="checkbox"><span>הגדלה רק בלחיצה על <kbd>Alt</kbd></span></label>
+      <label class="check-row"><input id="zoomOnWheel" type="checkbox"><span>זום באמצעות גלגלת העכבר</span></label>
+      <label class="check-row"><input id="showInfo" type="checkbox"><span>הצגת תיאור ומידות התמונה</span></label>
+      <label class="check-row"><input id="includeBackgrounds" type="checkbox"><span>הגדלת תמונות רקע של האתר</span></label>
+    </section>
+    <details class="shortcuts card"><summary>קיצורי מקשים</summary><dl>
+      <div><dt>הצמדה למסך / סגירת הצמדה</dt><dd><kbd>רווח</kbd></dd></div>
+      <div><dt>סגירת תצוגה</dt><dd><kbd>Esc</kbd></dd></div>
+      <div><dt>זום / איפוס</dt><dd><kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd></dd></div>
+      <div><dt>סיבוב / פתיחה בלשונית</dt><dd><kbd>R</kbd> <kbd>O</kbd></dd></div>
+      <div><dt>הזזה אחרי זום</dt><dd>גרירה בהצמדה / חצים</dd></div>
+      <div><dt>הפעלה / השהיה כללית</dt><dd><kbd dir="ltr">Alt+Shift+H</kbd></dd></div>
+    </dl></details>
+    <p id="saveStatus" role="status" aria-live="polite">ההגדרות נשמרות אוטומטית</p>
+    <div class="footer-actions"><a href="demo.html" target="_blank" rel="noopener">פתיחת דף הדגמה ↗</a><button type="button" id="reset">איפוס הגדרות</button></div>
+  </main>
+  <footer>ללא חשבון וללא איסוף נתונים · העיבוד מקומי בדפדפן</footer>
+</body>
+</html>

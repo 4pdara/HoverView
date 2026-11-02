@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HoverView — מגרש התמונות</title>
+  <link rel="stylesheet" href="demo.css">
+  <script src="shared.js" defer></script>
+  <script src="sources.js" defer></script>
+  <script src="content.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="demo.html"><img src="icons/icon48.png" width="35" height="35" alt=""><b dir="ltr">HoverView</b></a><span class="tag">מגרש התמונות שלכם</span></header>
+  <main>
+    <div class="eyebrow">פחות קליקים. יותר פרטים.</div>
+    <h1>פשוט לעבור.<br><span>ולראות בגדול.</span></h1>
+    <p class="intro">העבירו את העכבר מעל אחת התמונות.<br>רוצים להתעכב? לחצו על מקש הרווח כדי להצמיד אותה למסך.</p>
+    <div class="gallery">
+      <a class="card" href="demo-assets/mountains.svg"><div class="art"><img id="mountains" src="demo-assets/mountains.svg" alt="שמש של בוקר מעל פסגות ההרים" width="1600" height="1100"></div><div class="card-label"><div><strong>רגע של שקט</strong><small>תמונה עם קישור למקור</small></div><span>01</span></div></a>
+      <div class="card"><div class="art"><img id="city" src="demo-assets/city.svg" alt="חלונות מוארים בעיר בשעת ערב" width="1600" height="1100"></div><div class="card-label"><div><strong>כשהעיר נרגעת</strong><small>תמונה רגילה ברזולוציה גבוהה</small></div><span>02</span></div></div>
+      <div class="card"><div id="garden" class="art background" role="img" aria-label="צורות של עלים ופרחים בגווני ורוד וכתום"></div><div class="card-label"><div><strong>קצת צבע בעיניים</strong><small>תמונה המוגדרת כרקע</small></div><span>03</span></div></div>
+    </div>
+    <section class="guide"><div><kbd>רווח</kbd><strong>מצמידים</strong><p>התמונה נשארת פתוחה וניתן לגרור אותה אחרי זום.</p></div><div><kbd>גלגלת</kbd><strong>מתקרבים</strong><p>גוללים מעל התמונה הקטנה, או בתוך התמונה המוצמדת.</p></div><div><kbd>Esc</kbd><strong>ממשיכים</strong><p>סוגרים את החלונית וחוזרים לגלישה.</p></div></section>
+    <aside>התוסף כבוי? פתחו את סמל התוסף בסרגל הכלים והפעילו אותו. במצב Alt, החזיקו את המקש בזמן הריחוף.</aside>
+  </main>
+  <footer>HoverView 1.0 · נבנה למבט סקרן · כל תמונות ההדגמה מצורפות לתוסף</footer>
+</body>
+</html>

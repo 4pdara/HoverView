@@ -1,0 +1,8 @@
+node_modules/
+artifacts/
+website/downloads/*.zip
+*.log
+.DS_Store
+__pycache__/
+.env*
+!.env.example

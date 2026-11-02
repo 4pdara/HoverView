@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "HoverView — הגדלת תמונות",
+  "version": "1.0.0",
+  "description": "הגדלת תמונות במעבר עכבר, בחירת מקור באיכות גבוהה, זום והצמדה למסך. ממשק בעברית.",
+  "minimum_chrome_version": "109",
+  "permissions": ["storage", "activeTab"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "HoverView — הגדלת תמונות",
+    "default_popup": "popup.html",
+    "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "content_scripts": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "js": ["shared.js", "sources.js", "content.js"],
+    "run_at": "document_idle",
+    "all_frames": true,
+    "match_about_blank": true
+  }],
+  "commands": {
+    "toggle-enabled": {
+      "suggested_key": { "default": "Alt+Shift+H" },
+      "description": "הפעלה או השהיה של הגדלת תמונות"
+    }
+  }
+}
