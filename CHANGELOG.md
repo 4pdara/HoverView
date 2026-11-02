@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 — 2026-11-02
+
+- Fix AliExpress original-image selection for alicdn.com and aliexpress-media.com thumbnail URLs, including WebP/AVIF size and quality suffixes.
+- Prefer responsive full-size sources over lazy-loading thumbnails; apply CDN upgrades to CSS backgrounds and image links.
+- Preserve signed URLs, unrelated transformations and thumbnail fallback when the original is unavailable.
+- Add dedicated Chrome Web Store upload ZIPs, a submission kit, store screenshots, promotional artwork and copy-ready listing/privacy/reviewer text.
+- Expand regression coverage to 88 checks.
+
 ## 1.0.0 — 2026-11-02
 
 First HoverView release.

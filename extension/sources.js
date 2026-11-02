@@ -38,6 +38,27 @@
     try {
       const u = new URL(value);
       // Do not rewrite arbitrary query strings: these often contain signed URLs.
+      if (/(^|\.)(?:alicdn\.com|aliexpress-media\.com)$/.test(u.hostname)) {
+        // AliExpress appends image transforms after the real file extension:
+        // photo.jpg_220x220q75.jpg_.avif -> photo.jpg. Restrict this rule to
+        // Alibaba's image CDN hosts and preserve the thumbnail as a fallback.
+        if ([...u.searchParams.keys()].some(key => /^(?:signature|sig|token|auth_key|expires|ossaccesskeyid|security-token|x-oss-(?:signature|credential|security-token)|x-amz-(?:signature|credential))$/i.test(key))) return null;
+        const before = u.href;
+        const path = /^(.*?\.(?:avif|bmp|gif|jpe?g|png|webp))(_[^/]+)$/i.exec(u.pathname);
+        if (path && /^_(?:(?:\d+x\d+|[qs]\d+)[a-z0-9_.!,-]*|\.(?:avif|jpe?g|png|webp))$/i.test(path[2])) u.pathname = path[1];
+        const processing = u.searchParams.get("x-oss-process");
+        if (processing?.startsWith("image/")) {
+          // Retain unrelated operations (for example a watermark) and URL
+          // parameters; remove only the size/quality/format transformations.
+          const parts = processing.split("/");
+          const kept = parts.filter((part, i) => i === 0 || !/^(?:resize|quality|format)(?:,|$)/.test(part));
+          if (kept.length !== parts.length) {
+            if (kept.length === 1) u.searchParams.delete("x-oss-process");
+            else u.searchParams.set("x-oss-process", kept.join("/"));
+          }
+        }
+        return u.href === before ? null : u.href;
+      }
       if (u.hostname === "pbs.twimg.com" && u.pathname.startsWith("/media/")) {
         u.searchParams.set("name", "orig"); return u.href;
       }
@@ -63,7 +84,7 @@
     const link = anchor?.getAttribute("href");
     if (link && imageExtension.test(link)) add(link);
     if (img) {
-      for (const name of ["data-original", "data-full", "data-full-src", "data-zoom-image", "data-large", "data-large-src", "data-src"])
+      for (const name of ["data-original", "data-full", "data-full-src", "data-zoom-image", "data-large", "data-large-src"])
         add(img.getAttribute(name));
       const entries = srcsetEntries(img.getAttribute("srcset") || img.getAttribute("data-srcset") || "");
       // Only use <picture> sources whose media query matches the current page.
@@ -71,12 +92,9 @@
         if (!source.media || matchMedia(source.media).matches) entries.push(...srcsetEntries(source.srcset));
       entries.sort((a, b) => b.score - a.score);
       for (const entry of entries) add(entry.url);
-      for (const url of [img.currentSrc, img.src]) { add(knownOriginal(url)); add(url); }
-      // Try known CDN originals before falling back to page-provided thumbnails.
-      for (const url of [...candidates].reverse()) {
-        const original = knownOriginal(url);
-        if (original && !candidates.includes(original)) candidates.unshift(original);
-      }
+      // Lazy-loading data-src is often just a small thumbnail. Responsive and
+      // explicit full-size sources must take precedence over it.
+      add(img.getAttribute("data-src"));
       // Always retain the currently displayed image as a final fallback.
       add(img.currentSrc); add(img.src);
     } else if (includeBackgrounds) {
@@ -87,11 +105,19 @@
       }
     }
     if (!candidates.length) return null;
+    // Apply the same high-resolution rules to CSS backgrounds and image links,
+    // not just <img>. Keep all original candidates for failed-source fallback.
+    const originals = [];
+    for (const candidate of candidates) {
+      const original = safeURL(knownOriginal(candidate));
+      if (original && !originals.includes(original)) originals.push(original);
+    }
+    const ordered = [...originals, ...candidates.filter(url => !originals.includes(url))];
     const target = img || element;
     const rect = target.getBoundingClientRect();
     if (rect.width < 24 || rect.height < 24) return null;
     return {
-      element: target, candidates,
+      element: target, candidates: ordered,
       caption: (img?.alt || target.getAttribute("aria-label") || target.getAttribute("title") || "").trim().slice(0, 240),
       referrerPolicy: img?.referrerPolicy || ""
     };

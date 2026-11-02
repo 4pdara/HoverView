@@ -51,7 +51,7 @@
 
 ## איכות ותאימות
 
-HoverView קורא קישורים לקובצי תמונה, מאפיינים כמו `data-original` ו־`data-full`, גרסאות `srcset` ו־`picture`, ואת מקור התמונה המוצגת. יש ניסיונות לקבל מקור בחלק מכתובות התמונות של X, Pinterest ו־Wikimedia, עם חזרה למקור זמין אם הניסיון נכשל.
+HoverView קורא קישורים לקובצי תמונה, מאפיינים כמו `data-original` ו־`data-full`, גרסאות `srcset` ו־`picture`, ואת מקור התמונה המוצגת. יש ניסיונות לקבל מקור בחלק מכתובות התמונות של AliExpress, X, Pinterest ו־Wikimedia, עם חזרה למקור זמין אם הניסיון נכשל.
 
 אין שיפור תמונה באמצעות AI. כשאין מקור גדול יותר, הגדלת התצוגה אינה יוצרת פרטים חדשים. גלריות מיוחדות, Canvas, Shadow DOM סגור, כתובות מוגנות ומדיניות אבטחה של אתרים עשויים להגביל את פעולת התוסף. תצוגות בתוך iframe מוגבלות לגבולותיו.
 
@@ -89,7 +89,7 @@ npm test
 
 <div dir="rtl">
 
-הבנייה יוצרת בתיקיית `artifacts/` את `hoverview-v1.0.0.zip`, את `hoverview.zip` ואת `SHA256SUMS.txt`, ומעתיקה קובץ הורדה לאתר. ה־ZIP כולל את תיקיית `hoverview/`, ללא תיקיית הבדיקות. פרטי האימות ומגבלותיו נמצאים ב־[VALIDATION.md](extension/VALIDATION.md).
+הבנייה יוצרת בתיקיית `artifacts/` את `hoverview-v1.0.1.zip`, את `hoverview.zip` ואת `SHA256SUMS.txt`, ומעתיקה קובץ הורדה לאתר. ה־ZIP כולל את תיקיית `hoverview/`, ללא תיקיית הבדיקות. פרטי האימות ומגבלותיו נמצאים ב־[VALIDATION.md](extension/VALIDATION.md).
 
 לתצוגה מקומית של האתר:
 
@@ -103,6 +103,14 @@ python3 -m http.server 8080 --directory website
 
 לאחר מכן פתחו `http://localhost:8080`.
 
+## הכנה לחנות Chrome
+
+**[ערכת ההגשה המלאה לגרסה 1.0.1](https://github.com/4pdara/HoverView/releases/download/v1.0.1/hoverview-store-kit-v1.0.1.zip)** כוללת צילומי מסך, אייקון, תמונות קידום, תיאורים בעברית ובאנגלית, הוראות לבודק והסברי הרשאות ופרטיות.
+
+להעלאה לחנות בחרו ב־**hoverview-webstore.zip**: בחבילה זו manifest.json נמצא בשורש. ה־ZIP הרגיל מיועד להתקנה ידנית וכולל תיקיית hoverview/. אין להעלות את ZIP ערכת ההגשה עצמה בתור התוסף.
+
+ראו [הוראות ההגשה](store/UPLOAD-GUIDE.he.md), [דוח תאימות](store/COMPATIBILITY.md) ו־[הסברי הפרטיות](store/PRIVACY-AND-PERMISSIONS.md). התוסף טרם הוגש לחנות.
+
 ## פרסום האתר ב־GitHub Pages
 
 תהליך **Deploy HoverView to GitHub Pages** בונה את קובץ ההורדה, מריץ בדיקות ומפרסם את תיקיית `website/` בכל שינוי רלוונטי שנדחף ל־`main`. אפשר להפעילו גם ידנית דרך Actions. מקור הפרסום בהגדרות Settings → Pages מוגדר ל־GitHub Actions.
@@ -112,7 +120,7 @@ python3 -m http.server 8080 --directory website
 1. עדכנו את `version` ב־`extension/manifest.json` וב־`package.json` לאותו מספר.
 2. הוסיפו הערות גרסה ב־`releases/vX.Y.Z.md` ועדכנו את `CHANGELOG.md` ואת מספרי הגרסה המוצגים באתר ובתוסף.
 3. הריצו בנייה ובדיקות, ואז העלו ל־`main`.
-4. תהליך **Publish HoverView release** ב־GitHub Actions אורז את התוסף ומפרסם Release עם תגית הגרסה, שתי חבילות ZIP וחתימות SHA-256.
+4. תהליך **Publish HoverView release** ב־GitHub Actions אורז את התוסף ומפרסם Release עם תגית הגרסה, חבילות התקנה ידנית, חבילות לחנות, ערכת הגשה וחתימות SHA-256.
 
 התהליך אינו משנה Release שכבר קיים עם אותו מספר. אפשר להפעילו ידנית דרך Actions → Publish HoverView release → Run workflow. אם GitHub דורש אישור להפעלת Actions בריפו, יש לאפשר אותו בהגדרות הריפו. פרסום דורש הרשאת `contents: write` שהוגדרה בתהליך.
 

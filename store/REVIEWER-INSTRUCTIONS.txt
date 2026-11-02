@@ -1,0 +1,19 @@
+HoverView 1.0.1 — reviewer test instructions
+
+No login, subscription, payment, API key or special account is required to use the extension. The interface is Hebrew. It is an image-hover viewer with related zoom/pin/pan/rotate controls.
+
+1. Install the uploaded package in Chrome.
+2. Open the toolbar action popup. The first switch is the global enable switch. The default is enabled. Click the link near the bottom labelled "פתיחת דף הדגמה" to open the included demo.
+3. Hover the first landscape image. After the default 350 ms delay, the larger viewer appears. Press Space to pin it; use the mouse wheel or + / - to zoom; drag after zooming to pan. Press R on an English keyboard layout to rotate, 0 to reset, and Escape to close.
+4. On a normal HTTPS website, reload the tab after installing. Hover an ordinary image at least 24×24 pixels. The extension checks image links, original-source attributes, srcset/picture sources and known image CDN variants. If an original fails it falls back to another available candidate.
+5. Open the action popup on that website. The second switch, "הפעלה באתר הזה", toggles previews for the exact hostname. Global pause is also available through Alt+Shift+H if Chrome assigned the shortcut.
+6. Enable "הגדלה רק בלחיצה על Alt" to require Alt while hovering. Releasing Alt closes an unpinned viewer.
+
+The public website https://4pdara.github.io/HoverView/ contains a separate, clearly labelled interactive demonstration. That website simulation is not the extension itself; use the bundled demo or another ordinary website to review the extension code.
+
+Expected restrictions: Chrome internal pages, the Chrome Web Store, file:// URLs and the built-in PDF viewer are unsupported. iframe previews remain inside the frame. Site-specific Canvas/custom galleries and protected image sources may not work. No AI upscaling is performed.
+
+No remote executable code is loaded. Settings and host preferences remain in chrome.storage.local. Images load directly from their original image hosts under normal browser policies. The publisher does not operate an image proxy or analytics endpoint.
+
+Support/source: https://github.com/4pdara/HoverView
+Privacy: https://4pdara.github.io/HoverView/privacy.html

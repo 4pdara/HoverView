@@ -34,4 +34,18 @@ assert.ok(fs.existsSync(path.join(site, 'assets/social.png')));
 assert.ok(fs.existsSync(path.join(root, 'README.md')));
 assert.ok(fs.existsSync(path.join(root, 'CHANGELOG.md')));
 assert.ok(fs.existsSync(path.join(root, 'LICENSE')));
-console.log('PASS syntax, Manifest V3, version alignment, website links, HTML resources and documentation');
+assert.ok(manifest.description.length <= 132);
+assert.equal(manifest.homepage_url, 'https://4pdara.github.io/HoverView/');
+for (const file of ['browser.js','store-capture.js','store-api-adapter.js']) new vm.Script(fs.readFileSync(path.join(root,'tests',file),'utf8'));
+checkHTML(path.join(root,'tests'),'store-capture.html');
+for (const [name,width,height] of [
+  ['icon-128.png',128,128],['screenshot-01-hover.png',1280,800],
+  ['screenshot-02-pinned.png',1280,800],['screenshot-03-settings.png',1280,800],
+  ['promo-440x280.png',440,280],['marquee-1400x560.png',1400,560]
+]) {
+  const data=fs.readFileSync(path.join(root,'store/assets',name));
+  assert.equal(data.subarray(0,8).toString('hex'),'89504e470d0a1a0a',name);
+  assert.equal(data.readUInt32BE(16),width,name); assert.equal(data.readUInt32BE(20),height,name);
+}
+for(const name of ['UPLOAD-GUIDE.he.md','listing.he.txt','listing.en.txt','PRIVACY-AND-PERMISSIONS.md','REVIEWER-INSTRUCTIONS.txt','COMPATIBILITY.md']) assert.ok(fs.existsSync(path.join(root,'store',name)),name);
+console.log('PASS syntax, Manifest V3, versions, website/HTML resources, documentation, store assets and image dimensions');

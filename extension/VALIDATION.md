@@ -1,11 +1,11 @@
-# Validation — version 1.0.0
+# Validation — version 1.0.1
 
 Date: 2026-11-02
 
 ## Completed
 
 - JavaScript syntax checks with `node --check` for the content script, image source resolver, popup, service worker and shared preferences module.
-- `node tests/run.cjs`: **59 checks passed** against the actual JavaScript modules in a controlled DOM model.
+- `node tests/run.cjs`: **88 checks passed** against the actual JavaScript modules in a controlled DOM model.
 - Tested URL validation, srcset ordering, picture media filtering, known CDN original selection, thumbnail fallback and preference normalization.
 - Tested hover activation and delay cancellation, stale request cancellation, Escape suppression, pinning, wheel zoom, rotation, reset, safe new-tab options, global/site disabling, Alt mode, text-input shortcut isolation, light theme and hidden-tab cleanup.
 - Manifest V3 parsed successfully; declared script, popup and icon resources checked for existence.
@@ -32,3 +32,7 @@ The browser fixture does not install an extension: actual Chrome extension permi
 8. Verify that Chrome internal pages and the Chrome Web Store remain unsupported and that the popup explains this restriction.
 
 The extension is an independent initial implementation. It has not been submitted to the Chrome Web Store or certified against all sites supported by PhotoShow.
+
+## Version 1.0.1 regression expansion
+
+88 checks pass, including AliExpress original-size selection (modeled 1600×1600 original versus 220×220 thumbnail), failure fallback, srcset/lazy priority, CSS backgrounds and image links, unchanged unrelated/signed URLs, and the existing Pinterest/X/Wikimedia pipeline. The Chrome fixture was rerun after the fix. See ../store/COMPATIBILITY.md for the tested matrix and the blocked direct AliExpress-page check.

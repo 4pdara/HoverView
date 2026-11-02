@@ -1,0 +1,45 @@
+Extension name:
+HoverView — הגדלת תמונות
+
+Suggested English headline (use in the description if the dashboard does not offer an English title):
+HoverView — Bigger images on hover
+
+Short description:
+Preview larger images on hover, zoom, pin and rotate. Try higher-resolution sources when available. Hebrew interface.
+
+Suggested category:
+Tools, or the closest equivalent offered by the current dashboard.
+
+Full description:
+HoverView shows a larger image when you move your pointer over a picture, while keeping you on the page you are browsing.
+
+When a website exposes a suitable higher-resolution source, HoverView tries to use it rather than simply enlarging the thumbnail. Version 1.0.1 adds original-image candidates for AliExpress images hosted on alicdn.com and aliexpress-media.com.
+
+Features
+• Preview images beside the pointer or in the center of the screen.
+• Zoom using the mouse wheel or the + and - keys.
+• Press Space to pin an image, then drag to pan after zooming.
+• Rotate images and open their source in a separate tab.
+• Choose a dark or light viewer, hover delay and maximum size.
+• Require Alt to be held before showing a preview.
+• Disable previews for an individual website or pause the extension globally.
+
+The settings and viewer interface are in Hebrew. An included offline demo lets you try the controls. This is not an English translation of the interface; the English text describes the Hebrew-interface product.
+
+Quick controls
+Space: pin or close a pinned image.
+Escape: close the viewer.
+0: reset zoom and rotation.
+R: rotate using an English keyboard layout.
+O: open the image source in a new tab using an English keyboard layout.
+Alt+Shift+H: enable or pause globally, if Chrome assigns the shortcut.
+
+Privacy
+No account, analytics or extension-operated processing server. Image URLs and captions are processed in the browser to render previews. Settings and per-site preferences are stored locally. Images are requested directly from their original image servers under the browser's normal policies.
+
+Limitations
+Compatibility varies by website. Chrome prevents extensions from running on internal browser pages and the Chrome Web Store. Canvas images, custom gallery implementations and protected image sources may not work. A small source image cannot gain details that do not exist in the source; HoverView does not provide AI upscaling.
+
+Website: https://4pdara.github.io/HoverView/
+Support and source: https://github.com/4pdara/HoverView
+Privacy: https://4pdara.github.io/HoverView/privacy.html

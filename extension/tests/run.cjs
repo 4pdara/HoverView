@@ -9,6 +9,7 @@ let passed = 0;
 function check(label, run) { run(); passed++; console.log(`PASS ${label}`); }
 const listeners = new Map(), storageListeners = [], images = [];
 const values = { delay: 0 };
+const probeResponses = new Map();
 class Element {
   constructor(tag = 'div', attrs = {}) {
     this.tagName = tag.toUpperCase(); this.attrs = { ...attrs }; this.children = [];
@@ -47,7 +48,9 @@ class Probe extends Element {
   set src(value) {
     this.attrs.src = value;
     if (value.includes('small')) { this.naturalWidth = 400; this.naturalHeight = 250; }
-    setTimeout(() => value.includes('broken') ? this.onerror?.() : this.onload?.(), 0);
+    const response = probeResponses.get(value);
+    if (response?.width) { this.naturalWidth = response.width; this.naturalHeight = response.height; }
+    setTimeout(() => (response?.error ?? value.includes('broken')) ? this.onerror?.() : this.onload?.(), 0);
   }
   get src() { return this.attrs.src; }
 }
@@ -99,6 +102,40 @@ check('X media original retained with format', () => assert.equal(S.knownOrigina
 check('Pinterest original URL', () => assert.equal(S.knownOriginal('https://i.pinimg.com/236x/a/b.jpg'), 'https://i.pinimg.com/originals/a/b.jpg'));
 check('Wikimedia bitmap original URL', () => assert.equal(S.knownOriginal('https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Photo.jpg/300px-Photo.jpg'), 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Photo.jpg'));
 check('Wikimedia rendered documents not rewritten', () => assert.equal(S.knownOriginal('https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Map.svg/300px-Map.svg.png'), null));
+check('AliExpress legacy CDN 220px original', () => assert.equal(S.knownOriginal('https://ae01.alicdn.com/kf/Example.jpg_220x220q75.jpg_.webp'), 'https://ae01.alicdn.com/kf/Example.jpg'));
+check('AliExpress current CDN AVIF thumbnail original', () => assert.equal(S.knownOriginal('https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg_220x220q75.jpg_.avif'), 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg'));
+check('AliExpress PNG size suffix original', () => assert.equal(S.knownOriginal('https://ae02.alicdn.com/kf/Example.png_80x80.png'), 'https://ae02.alicdn.com/kf/Example.png'));
+check('AliExpress quality-only suffix original', () => assert.equal(S.knownOriginal('https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg_Q90.jpg_.webp'), 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg'));
+check('AliExpress format-only suffix original', () => assert.equal(S.knownOriginal('https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg_.webp'), 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg'));
+check('AliExpress unrelated query parameters retained', () => assert.equal(S.knownOriginal('https://ae01.alicdn.com/kf/Example.jpg_220x220.jpg?cache=123'), 'https://ae01.alicdn.com/kf/Example.jpg?cache=123'));
+check('AliExpress OSS resizing query removed', () => assert.equal(S.knownOriginal('https://ae01.alicdn.com/kf/Example.jpg?x-oss-process=image%2Fresize%2Cw_220%2Fquality%2Cq_75&cache=123'), 'https://ae01.alicdn.com/kf/Example.jpg?cache=123'));
+check('AliExpress OSS unrelated operations preserved', () => assert.equal(new URL(S.knownOriginal('https://ae01.alicdn.com/kf/Example.jpg?x-oss-process=image%2Fresize%2Cw_220%2Fwatermark%2Ctext_test')).searchParams.get('x-oss-process'), 'image/watermark,text_test'));
+check('AliExpress signed URLs unchanged', () => assert.equal(S.knownOriginal('https://ae01.alicdn.com/kf/Example.jpg_220x220.jpg?Signature=secret&Expires=123'), null));
+check('AliExpress untransformed source unchanged', () => assert.equal(S.knownOriginal('https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg'), null));
+check('Lookalike CDN host not rewritten', () => assert.equal(S.knownOriginal('https://alicdn.com.example.test/kf/Example.jpg_220x220.jpg'), null));
+check('Unknown image suffix not stripped', () => assert.equal(S.knownOriginal('https://ae01.alicdn.com/kf/Example.jpg_backup.jpg'), null));
+const aliThumb = 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg_220x220q75.jpg_.avif';
+const aliImage = new Element('img', { src: aliThumb, 'data-src': aliThumb, srcset: aliThumb + ' 1x, https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg_960x960q75.jpg_.avif 2x' });
+check('AliExpress original leads and stays deduplicated', () => {
+  const urls = S.resolve(aliImage).candidates;
+  assert.equal(urls[0], 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg');
+  assert.equal(urls.filter(url => url.endsWith('/Example.jpg')).length, 1);
+  assert.ok(urls.includes(aliThumb));
+});
+check('Lazy thumbnail cannot outrank larger srcset', () => assert.equal(S.resolve(new Element('img', {src:'/small.jpg','data-src':'/small.jpg',srcset:'/full.jpg 1600w'})).candidates[0], 'https://example.test/full.jpg'));
+check('AliExpress CSS background receives original candidate', () => assert.equal(S.resolve(new Element('div', { background: `url("${aliThumb}")` })).candidates[0], 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg'));
+check('AliExpress direct image link receives original candidate', () => assert.equal(S.resolve(new Element('a', {href:aliThumb})).candidates[0], 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg'));
+check('Ordinary CDN resize-looking path remains unchanged', () => assert.equal(S.resolve(new Element('img', {src:'https://images.example.test/item.jpg_220x220.jpg'})).candidates[0], 'https://images.example.test/item.jpg_220x220.jpg'));
+check('Ordinary CDN quality and sizing queries remain unchanged', () => assert.equal(S.resolve(new Element('img', {src:'https://images.example.test/item.jpg?w=220&q=60&token=abc'})).candidates[0], 'https://images.example.test/item.jpg?w=220&q=60&token=abc'));
+check('Pinterest image pipeline still prefers original', () => assert.equal(S.resolve(new Element('img', {src:'https://i.pinimg.com/236x/a/b.jpg'})).candidates[0], 'https://i.pinimg.com/originals/a/b.jpg'));
+check('X image pipeline still prefers original', () => assert.equal(S.resolve(new Element('img', {src:'https://pbs.twimg.com/media/a?format=jpg&name=small'})).candidates[0], 'https://pbs.twimg.com/media/a?format=jpg&name=orig'));
+check('Wikimedia image pipeline still prefers original', () => assert.equal(S.resolve(new Element('img', {src:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Photo.jpg/300px-Photo.jpg'})).candidates[0], 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Photo.jpg'));
+check('Embedded image pipeline keeps its original data URL', () => assert.equal(S.resolve(new Element('img', {src:'data:image/png;base64,AAAA'})).candidates[0], 'data:image/png;base64,AAAA'));
+check('Blob image pipeline keeps its original URL', () => assert.equal(S.resolve(new Element('img', {src:'blob:https://example.test/abc'})).candidates[0], 'blob:https://example.test/abc'));
+check('Responsive higher-density image keeps precedence', () => assert.equal(S.resolve(new Element('img', {src:'/small.jpg',srcset:'/small.jpg 1x, /retina.jpg 2x'})).candidates[0], 'https://example.test/retina.jpg'));
+const matchingPicture = new Element('picture'), matchingSource = new Element('source', {srcset:'/picture-large.jpg 2400w'});
+matchingSource.media = '(min-width: 1px)'; matchingPicture.append(matchingSource,new Element('img',{src:'/picture-small.jpg'}));
+check('Matching picture source is still preferred', () => assert.equal(S.resolve(matchingPicture).candidates[0], 'https://example.test/picture-large.jpg'));
 const thumbnail = new Element('img', { src: 'https://example.test/small.jpg', alt: 'Sample' });
 body.append(thumbnail);
 check('ordinary image resolved', () => assert.equal(S.resolve(thumbnail).candidates[0], thumbnail.src));
@@ -186,6 +223,20 @@ async function hover(el) { emit('pointerover', el); await pause(25); }
   check('information preference respected', () => assert.equal(viewer().querySelector('.info').hidden, true));
   document.hidden = true; emit('visibilitychange', body);
   check('hidden tabs release the viewer', () => assert.equal(panel().hidden, true));
+  document.hidden = false;
+  await patch({ delay: 0 });
+  const aliOriginal = 'https://ae-pic-a1.aliexpress-media.com/kf/Example.jpg';
+  probeResponses.set(aliOriginal, {width:1600,height:1600});
+  probeResponses.set(aliThumb, {width:220,height:220});
+  const aliHover = new Element('img', {src:aliThumb}); body.append(aliHover);
+  await hover(aliHover);
+  check('AliExpress hover loads original instead of 220px thumbnail', () => assert.equal(viewer().querySelector('.image').src, aliOriginal));
+  check('AliExpress hover reports true original dimensions', () => assert.match(viewer().querySelector('.dimensions').textContent, /1600 × 1600/));
+  emit('pointerover', body);
+  probeResponses.set(aliOriginal, {error:true}); await hover(aliHover);
+  check('AliExpress blocked original falls back to visible thumbnail', () => assert.equal(viewer().querySelector('.image').src, aliThumb));
+  check('AliExpress fallback dimensions remain accurate', () => assert.match(viewer().querySelector('.dimensions').textContent, /220 × 220/));
+  emit('pointerover', body);
   check('manifest is v3 with local scripts', () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(base, 'manifest.json')));
     assert.equal(manifest.manifest_version, 3);
