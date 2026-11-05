@@ -13,7 +13,7 @@ Tools, or the closest equivalent offered by the current dashboard.
 Full description:
 HoverView shows a larger image when you move your pointer over a picture, while keeping you on the page you are browsing.
 
-When a website exposes a suitable higher-resolution source, HoverView tries to use it rather than simply enlarging the thumbnail. Version 1.0.1 adds original-image candidates for AliExpress images hosted on alicdn.com and aliexpress-media.com.
+When a website exposes a suitable higher-resolution source, HoverView tries to use it rather than simply enlarging the thumbnail. This includes original-image candidates for AliExpress images hosted on alicdn.com and aliexpress-media.com. Version 1.0.2 improves image loading and keeps stationary previews stable during unrelated page updates.
 
 Features
 • Preview images beside the pointer or in the center of the screen.

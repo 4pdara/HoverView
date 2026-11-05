@@ -89,7 +89,7 @@ npm test
 
 <div dir="rtl">
 
-הבנייה יוצרת בתיקיית `artifacts/` את `hoverview-v1.0.1.zip`, את `hoverview.zip` ואת `SHA256SUMS.txt`, ומעתיקה קובץ הורדה לאתר. ה־ZIP כולל את תיקיית `hoverview/`, ללא תיקיית הבדיקות. פרטי האימות ומגבלותיו נמצאים ב־[VALIDATION.md](extension/VALIDATION.md).
+הבנייה יוצרת בתיקיית `artifacts/` את `hoverview-v1.0.2.zip`, את `hoverview.zip` ואת `SHA256SUMS.txt`, ומעתיקה קובץ הורדה לאתר. ה־ZIP כולל את תיקיית `hoverview/`, ללא תיקיית הבדיקות. פרטי האימות ומגבלותיו נמצאים ב־[VALIDATION.md](extension/VALIDATION.md).
 
 לתצוגה מקומית של האתר:
 
@@ -105,7 +105,7 @@ python3 -m http.server 8080 --directory website
 
 ## הכנה לחנות Chrome
 
-**[ערכת ההגשה המלאה לגרסה 1.0.1](https://github.com/4pdara/HoverView/releases/download/v1.0.1/hoverview-store-kit-v1.0.1.zip)** כוללת צילומי מסך, אייקון, תמונות קידום, תיאורים בעברית ובאנגלית, הוראות לבודק והסברי הרשאות ופרטיות.
+**[ערכת ההגשה המלאה לגרסה 1.0.2](https://github.com/4pdara/HoverView/releases/download/v1.0.2/hoverview-store-kit-v1.0.2.zip)** כוללת צילומי מסך, אייקון, תמונות קידום, תיאורים בעברית ובאנגלית, הוראות לבודק והסברי הרשאות ופרטיות.
 
 להעלאה לחנות בחרו ב־**hoverview-webstore.zip**: בחבילה זו manifest.json נמצא בשורש. ה־ZIP הרגיל מיועד להתקנה ידנית וכולל תיקיית hoverview/. אין להעלות את ZIP ערכת ההגשה עצמה בתור התוסף.
 

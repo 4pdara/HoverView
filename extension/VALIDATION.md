@@ -1,11 +1,11 @@
-# Validation — version 1.0.1
+# Validation — version 1.0.2
 
-Date: 2026-11-02
+Date: 2026-11-05
 
 ## Completed
 
 - JavaScript syntax checks with `node --check` for the content script, image source resolver, popup, service worker and shared preferences module.
-- `node tests/run.cjs`: **88 checks passed** against the actual JavaScript modules in a controlled DOM model.
+- `node tests/run.cjs`: **103 checks passed** against the actual JavaScript modules in a controlled DOM model.
 - Tested URL validation, srcset ordering, picture media filtering, known CDN original selection, thumbnail fallback and preference normalization.
 - Tested hover activation and delay cancellation, stale request cancellation, Escape suppression, pinning, wheel zoom, rotation, reset, safe new-tab options, global/site disabling, Alt mode, text-input shortcut isolation, light theme and hidden-tab cleanup.
 - Manifest V3 parsed successfully; declared script, popup and icon resources checked for existence.
@@ -14,7 +14,7 @@ Date: 2026-11-02
 
 These checks use a DOM model, not a running installed Chrome extension. They do not establish real browser layout, extension permission behavior, service-worker lifecycle or compatibility with third-party websites.
 
-A managed Chrome preview was used to run `tests/browser.html` with the real content-script modules and a small `chrome.storage` API adapter. **13 browser checks passed**: real SVG loading and dimensions, native popover rendering, viewport containment, pin/focus, keyboard zoom, rotation, reset, Escape, dismissal suppression, live disabling, light theme, and a 390px mobile website viewport without horizontal overflow.
+A managed Chrome preview was used to run `tests/browser.html` with the real content-script modules and a small `chrome.storage` API adapter. **21 browser checks passed**: real SVG loading and dimensions, native popover rendering, viewport containment, pin/focus, keyboard zoom, rotation, reset, Escape, dismissal suppression, live disabling, light theme, and a 390px mobile website viewport without horizontal overflow.
 
 The marketing website was also visually inspected in Chrome. Image demo pinning, light-theme switching, closing and FAQ expansion were exercised. The early mobile overflow found by the browser fixture was repaired and the fixture passed afterward.
 
@@ -33,6 +33,12 @@ The browser fixture does not install an extension: actual Chrome extension permi
 
 The extension is an independent initial implementation. It has not been submitted to the Chrome Web Store or certified against all sites supported by PhotoShow.
 
-## Version 1.0.1 regression expansion
+## Version 1.0.2 regression expansion
 
-88 checks pass, including AliExpress original-size selection (modeled 1600×1600 original versus 220×220 thumbnail), failure fallback, srcset/lazy priority, CSS backgrounds and image links, unchanged unrelated/signed URLs, and the existing Pinterest/X/Wikimedia pipeline. The Chrome fixture was rerun after the fix. See ../store/COMPATIBILITY.md for the tested matrix and the blocked direct AliExpress-page check.
+103 checks pass, retaining AliExpress original-size selection (modeled 1600×1600 original versus 220×220 thumbnail), srcset/picture/lazy priority, CSS backgrounds, image links, signed/unrelated URLs and Pinterest/X/Wikimedia behavior.
+
+New controlled regressions cover decode failure and slow decoding, reusing a loaded image when a second request would fail, transparent 300px placeholders, cross-origin canvas restrictions, cancellation during decoding, unrelated scroll/storage/focus/resize events, and actual source/viewport exit.
+
+The real Chrome fixture passes 21 checks. Its additional cases verify that the displayed node is the decoded image, a preview stays visible through 1.8 seconds of unrelated scrolling, unrelated storage changes do not dismiss it, transparent and broken originals fall back, lazy source changes and replacement DOM nodes refresh under a stationary pointer, and moving the source away closes the preview.
+
+These are controlled reproductions of failure mechanisms, not a direct reproduction on the user's AliExpress page. See ../store/COMPATIBILITY.md for the matrix and access limitation.

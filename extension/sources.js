@@ -84,9 +84,9 @@
     const link = anchor?.getAttribute("href");
     if (link && imageExtension.test(link)) add(link);
     if (img) {
-      for (const name of ["data-original", "data-full", "data-full-src", "data-zoom-image", "data-large", "data-large-src"])
+      for (const name of ["data-original", "data-original-src", "data-full", "data-full-src", "data-zoom-image", "data-zoom-src", "data-large", "data-large-src"])
         add(img.getAttribute(name));
-      const entries = srcsetEntries(img.getAttribute("srcset") || img.getAttribute("data-srcset") || "");
+      const entries = srcsetEntries(img.getAttribute("srcset") || img.getAttribute("data-srcset") || img.getAttribute("data-lazy-srcset") || "");
       // Only use <picture> sources whose media query matches the current page.
       for (const source of img.closest("picture")?.querySelectorAll("source[srcset]") || [])
         if (!source.media || matchMedia(source.media).matches) entries.push(...srcsetEntries(source.srcset));
@@ -94,7 +94,7 @@
       for (const entry of entries) add(entry.url);
       // Lazy-loading data-src is often just a small thumbnail. Responsive and
       // explicit full-size sources must take precedence over it.
-      add(img.getAttribute("data-src"));
+      add(img.getAttribute("data-src")); add(img.getAttribute("data-lazy-src"));
       // Always retain the currently displayed image as a final fallback.
       add(img.currentSrc); add(img.src);
     } else if (includeBackgrounds) {

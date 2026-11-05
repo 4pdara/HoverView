@@ -1,4 +1,4 @@
-HoverView 1.0.1 — reviewer test instructions
+HoverView 1.0.2 — reviewer test instructions
 
 No login, subscription, payment, API key or special account is required to use the extension. The interface is Hebrew. It is an image-hover viewer with related zoom/pin/pan/rotate controls.
 
@@ -8,6 +8,8 @@ No login, subscription, payment, API key or special account is required to use t
 4. On a normal HTTPS website, reload the tab after installing. Hover an ordinary image at least 24×24 pixels. The extension checks image links, original-source attributes, srcset/picture sources and known image CDN variants. If an original fails it falls back to another available candidate.
 5. Open the action popup on that website. The second switch, "הפעלה באתר הזה", toggles previews for the exact hostname. Global pause is also available through Alt+Shift+H if Chrome assigned the shortcut.
 6. Enable "הגדלה רק בלחיצה על Alt" to require Alt while hovering. Releasing Alt closes an unpinned viewer.
+
+7. Keep the pointer still over an image for several seconds. Unrelated scrolling carousels or settings changes for a different site should not dismiss it. A replaced/lazy-loaded source under the pointer should refresh after decoding. Moving the source away, leaving the image or pressing Escape should close an unpinned preview.
 
 The public website https://4pdara.github.io/HoverView/ contains a separate, clearly labelled interactive demonstration. That website simulation is not the extension itself; use the bundled demo or another ordinary website to review the extension code.
 

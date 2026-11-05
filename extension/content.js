@@ -13,6 +13,7 @@
   let naturalWidth = 0, naturalHeight = 0, baseWidth = 0, baseHeight = 0;
   let pointer = { x: 0, y: 0 }, lastPath = [], altDown = false, drag = null;
   let lastFocused = null, currentURL = "", loadingImage = null, cancelLoad = null;
+  let sourceObserver = null, observedElement = null, hoverCheckFrame = 0;
 
   function active() { return ready && settings.enabled && siteEnabled; }
   function canTrigger() { return active() && (!settings.requireAlt || altDown); }
@@ -105,16 +106,63 @@
     }
     return null;
   }
+  function underPointer(element) {
+    if (!element?.isConnected) return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 && pointer.x >= rect.left && pointer.x <= rect.right && pointer.y >= rect.top && pointer.y <= rect.bottom;
+  }
+  function queueHoverCheck() {
+    if (hoverCheckFrame || pinned || !source) return;
+    hoverCheckFrame = requestAnimationFrame(() => { hoverCheckFrame = 0; refreshHover(); });
+  }
+  function unwatchSource() {
+    sourceObserver?.disconnect();
+    sourceObserver = null;
+    observedElement?.removeEventListener("load", queueHoverCheck);
+    observedElement?.removeEventListener("error", queueHoverCheck);
+    observedElement = null;
+  }
+  function watchSource() {
+    unwatchSource();
+    if (!source) return;
+    observedElement = source.element;
+    observedElement.addEventListener("load", queueHoverCheck);
+    observedElement.addEventListener("error", queueHoverCheck);
+    if (!source || typeof MutationObserver !== "function") return;
+    sourceObserver = new MutationObserver(queueHoverCheck);
+    sourceObserver.observe(source.element, { attributes: true, attributeFilter: ["src", "srcset", "style", "class", "data-src", "data-srcset", "data-lazy-src", "data-lazy-srcset", "data-original", "data-original-src", "data-full", "data-full-src", "data-zoom-image", "data-zoom-src", "data-large", "data-large-src"] });
+    if (source.element.parentElement) sourceObserver.observe(source.element.parentElement, { childList: true });
+    if (source.element.parentElement?.parentElement) sourceObserver.observe(source.element.parentElement.parentElement, { childList: true });
+    for (const item of source.element.closest("picture")?.querySelectorAll("source") || []) sourceObserver.observe(item, { attributes: true, attributeFilter: ["srcset", "media"] });
+  }
+  function refreshHover() {
+    if (pinned || !source) return;
+    if (!canTrigger()) { hide(); return; }
+    const hit = typeof document.elementFromPoint === "function" ? document.elementFromPoint(pointer.x, pointer.y) : null;
+    const path = [];
+    for (let node = hit; node; node = node.parentElement || node.getRootNode?.().host || null) path.push(node);
+    const found = findSource(path);
+    const next = found || (underPointer(source.element) ? resolve(source.element, settings) : null);
+    if (!next) { hide(); return; }
+    if (next.element !== source.element || next.candidates.join("\n") !== source.candidates.join("\n")) {
+      // Lazy loading and carousels may replace a source while the mouse is still.
+      // Keep the last rendered image until the replacement is actually decoded.
+      clearTimeout(timer); timer = 0; ++loadToken; cancelPendingLoad();
+      source = next; watchSource(); show(next);
+    } else if (visible) layout();
+  }
   function consider(path) {
     if (pinned) return;
     if (!canTrigger()) { hide(); return; }
     const next = findSource(path);
+    if (!next && source && underPointer(source.element)) return;
     if (next?.element === dismissedElement) return;
     dismissedElement = null;
     if (next && source?.element === next.element && source.candidates.join("\n") === next.candidates.join("\n")) return;
     hide();
     if (!next) return;
     source = next;
+    watchSource();
     timer = window.setTimeout(() => show(next), settings.delay);
   }
   function cancelPendingLoad() {
@@ -135,10 +183,31 @@
       };
       cancelLoad = () => finish(null);
       if (referrerPolicy) probe.referrerPolicy = referrerPolicy;
-      probe.onload = () => finish(token === loadToken && probe.naturalWidth > 0 ? probe : null);
+      probe.decoding = "sync";
+      probe.onload = async () => {
+        if (token !== loadToken || probe.naturalWidth <= 0) { finish(null); return; }
+        try { if (typeof probe.decode === "function") await probe.decode(); }
+        catch { finish(null); return; }
+        if (finished || token !== loadToken) { finish(null); return; }
+        finish(probe);
+      };
       probe.onerror = () => finish(null);
       probe.src = url;
     });
+  }
+  function hasVisiblePixels(loaded) {
+    // Transparent lazy-loading placeholders can be hundreds of pixels wide.
+    // Inspect only when canvas access is permitted; a tainted canvas must not
+    // prevent ordinary cross-origin images from being displayed.
+    try {
+      const canvas = document.createElement("canvas"); canvas.width = canvas.height = 32;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return true;
+      ctx.drawImage(loaded, 0, 0, 32, 32);
+      const pixels = ctx.getImageData(0, 0, 32, 32).data;
+      for (let i = 3; i < pixels.length; i += 4) if (pixels[i] !== 0) return true;
+      return false;
+    } catch { return true; }
   }
   async function show(next) {
     timer = 0;
@@ -153,9 +222,13 @@
       if (!loaded) continue;
       // Ignore 1px trackers/placeholders if the page provides a real fallback.
       if (loaded.naturalWidth < 16 || loaded.naturalHeight < 16) continue;
+      if (!hasVisiblePixels(loaded)) continue;
       ensureViewer();
       currentURL = url; naturalWidth = loaded.naturalWidth; naturalHeight = loaded.naturalHeight;
-      image.referrerPolicy = next.referrerPolicy; image.src = url; image.alt = next.caption;
+      // Reuse the tested, decoded node. Setting src on a second <img> can start
+      // another request or paint an empty frame despite the first load passing.
+      image = loaded; image.setAttribute("class", "image"); image.alt = next.caption;
+      image.setAttribute("draggable", "false"); viewport.replaceChildren(image);
       caption.textContent = next.caption || "תמונה"; caption.title = next.caption;
       panel.classList.toggle("light", settings.theme === "light");
       root.querySelector(".info").hidden = !settings.showInfo;
@@ -166,10 +239,12 @@
       return;
     }
     // Keep the source until the pointer leaves so broken images do not loop.
+    if (token === loadToken && visible) hide();
   }
   function hide(restoreFocus = false) {
     if (restoreFocus && source) dismissedElement = source.element;
     clearTimeout(timer); timer = 0; ++loadToken; cancelPendingLoad();
+    unwatchSource();
     const wasPinned = pinned;
     visible = false; pinned = false; drag = null; source = null; currentURL = "";
     if (panel) {
@@ -264,7 +339,10 @@
     if (!frame && visible && !pinned) frame = requestAnimationFrame(() => { frame = 0; place(); });
   }, true);
   document.addEventListener("pointerout", event => {
-    if (!event.relatedTarget && !pinned) hide();
+    if (!event.relatedTarget && !pinned) {
+      if (event.clientX <= 0 || event.clientY <= 0 || event.clientX >= innerWidth || event.clientY >= innerHeight) hide();
+      else queueHoverCheck();
+    }
   }, true);
   document.addEventListener("pointerdown", event => { if (!isOwn(event)) hide(); }, true);
   document.addEventListener("wheel", event => {
@@ -298,12 +376,13 @@
   document.addEventListener("keyup", event => {
     if (event.key === "Alt") { altDown = false; if (settings.requireAlt && !pinned) hide(); }
   }, true);
-  document.addEventListener("scroll", () => { if (!pinned) hide(); }, true);
-  window.addEventListener("blur", () => { altDown = false; if (!pinned) hide(); });
+  document.addEventListener("scroll", queueHoverCheck, { capture: true, passive: true });
+  window.addEventListener("blur", () => { altDown = false; if (!pinned && (document.hidden || settings.requireAlt)) hide(); });
   document.addEventListener("visibilitychange", () => { if (document.hidden) hide(); });
-  window.addEventListener("resize", () => { if (pinned) layout(); else hide(); });
+  window.addEventListener("resize", () => { if (pinned) layout(); else queueHoverCheck(); });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
+    if (![...Object.keys(defaults), hostSetting].some(key => key in changes && changes[key].newValue !== changes[key].oldValue)) return;
     for (const key of Object.keys(defaults))
       if (key in changes) settings[key] = changes[key].newValue ?? defaults[key];
     settings = normalize(settings);

@@ -1,4 +1,4 @@
-# Chrome Web Store privacy fields — HoverView 1.0.1
+# Chrome Web Store privacy fields — HoverView 1.0.2
 
 These answers describe the current source code. They are intended for the publisher to copy into the dashboard and review before certifying. Account identity, trader status and legal certifications are the publisher's own declarations; no identity or contact details are invented here.
 

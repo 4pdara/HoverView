@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2 — 2026-11-05
+
+- Decode candidate images before display and reuse the loaded image node to avoid a second request and empty previews.
+- Skip fully transparent placeholders where local canvas access permits inspection; fall back after load or decode failures.
+- Preserve stationary previews during unrelated scrolling, storage changes, visible-page focus changes and layout resizing. Close when the source actually leaves the pointer.
+- Refresh lazy sources and replaced thumbnails without requiring pointer movement. Recognize additional lazy/original source attributes.
+- Update website downloads, release documentation, store submission materials and screenshots.
+- Verify 103 controlled DOM checks and 21 real Chrome fixture checks. Full extension installation and the specific AliExpress page remain manual checks.
+
 ## 1.0.1 — 2026-11-02
 
 - Fix AliExpress original-image selection for alicdn.com and aliexpress-media.com thumbnail URLs, including WebP/AVIF size and quality suffixes.

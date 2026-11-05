@@ -23,7 +23,11 @@ class Element {
     };
     this.events = new Map();
   }
-  get src() { return this.attrs.src || ''; } set src(v) { this.attrs.src = v; }
+  get src() { return this.attrs.src || ''; } set src(v) {
+    this.attrs.src = v;
+    const response = probeResponses.get(v);
+    if (this.tagName === 'IMG' && response?.blockSecondRequest) { this.complete = false; this.naturalWidth = 0; }
+  }
   get srcset() { return this.attrs.srcset || ''; }
   get alt() { return this.attrs.alt || ''; } set alt(v) { this.attrs.alt = v; }
   get clientWidth() { return parseFloat(this.style.width) || this.width; }
@@ -32,19 +36,22 @@ class Element {
   setAttribute(k, v) { this.attrs[k] = String(v); if (k === 'class') this.className = v; if (k === 'hidden') this.hidden = true; }
   removeAttribute(k) { delete this.attrs[k]; }
   append(...children) { for (const child of children) { child.parentElement = this; this.children.push(child); } }
+  replaceChildren(...children) { this.children = []; this.append(...children); }
   matches(selector) { return selector.split(',').some(s => { s = s.trim(); return s.startsWith('.') ? this.classList.contains(s.slice(1)) : this.tagName.toLowerCase() === s.split('[')[0] && (!s.includes('[href]') || Boolean(this.attrs.href)) && (!s.includes('[srcset]') || Boolean(this.attrs.srcset)); }); }
   closest(selector) { return this.matches(selector) ? this : this.parentElement?.closest(selector) || null; }
   querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
   querySelectorAll(selector) { return this.children.flatMap(c => [...(c.matches(selector) ? [c] : []), ...c.querySelectorAll(selector)]); }
-  getBoundingClientRect() { return { left: 50, top: 50, right: 50 + this.clientWidth, bottom: 50 + this.clientHeight, width: this.clientWidth, height: this.clientHeight }; }
+  getBoundingClientRect() { const top = this.mockTop ?? 50; return { left: 50, top, right: 50 + this.clientWidth, bottom: top + this.clientHeight, width: this.clientWidth, height: this.clientHeight }; }
+  getContext() { if(this.tagName !== 'CANVAS') return null; let rendered; return {drawImage:img=>{rendered=img;},getImageData:()=>{if(probeResponses.get(rendered?.src)?.tainted)throw Error('SecurityError');return{data:[0,0,0,probeResponses.get(rendered?.src)?.transparent?0:255]};}}; }
   attachShadow() { this.testShadow = new Element('shadow-root'); return this.testShadow; }
   showPopover() { this.popoverShown = true; }
   addEventListener(type, fn) { this.events.set(type, [...(this.events.get(type) || []), fn]); }
+  removeEventListener(type,fn) { this.events.set(type,(this.events.get(type)||[]).filter(item=>item!==fn)); }
   focus() { document.activeElement = this; }
   setPointerCapture() {}
 }
 class Probe extends Element {
-  constructor() { super('img'); this.naturalWidth = 1600; this.naturalHeight = 1000; images.push(this); }
+  constructor() { super('img'); this.naturalWidth = 1600; this.naturalHeight = 1000; this.complete = true; images.push(this); }
   set src(value) {
     this.attrs.src = value;
     if (value.includes('small')) { this.naturalWidth = 400; this.naturalHeight = 250; }
@@ -53,6 +60,7 @@ class Probe extends Element {
     setTimeout(() => (response?.error ?? value.includes('broken')) ? this.onerror?.() : this.onload?.(), 0);
   }
   get src() { return this.attrs.src; }
+  async decode() { const response=probeResponses.get(this.src);if(response?.decodeDelay)await new Promise(r=>setTimeout(r,response.decodeDelay));if(response?.decodeError)throw Error('Corrupt image');this.decoded=true; }
 }
 const body = new Element('body'), html = new Element('html'); html.append(body);
 const document = {
@@ -157,7 +165,7 @@ check('nonmatching picture media ignored', () => assert.equal(S.resolve(picture)
 vm.runInContext(fs.readFileSync(path.join(base, 'content.js'), 'utf8'), context, { filename: 'content.js' });
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 function emit(type, el, extra = {}) {
-  const event = { pointerType: 'mouse', clientX: 200, clientY: 180, altKey: false, button: 0, relatedTarget: body,
+  const event = { pointerType: 'mouse', clientX: type==='pointerover'&&el===body?500:200, clientY: type==='pointerover'&&el===body?300:100, altKey: false, button: 0, relatedTarget: body,
     composedPath: () => [el, body, html], key: '', code: '', preventDefault() { this.prevented = true; }, stopPropagation() {}, ...extra };
   for (const fn of listeners.get(type) || []) fn(event);
   return event;
@@ -206,8 +214,11 @@ async function hover(el) { emit('pointerover', el); await pause(25); }
   check('wheel option preserves normal page scrolling', () => assert.equal(emit('wheel', thumbnail, { deltaY: 100 }).prevented, undefined));
   const input = new Element('input');
   check('typing in text input does not trigger image shortcuts', () => assert.equal(emit('keydown', input, { key: 'r' }).prevented, undefined));
-  emit('scroll', body);
-  check('page scroll closes unpinned viewer', () => assert.equal(panel().hidden, true));
+  emit('scroll', body); await pause(5);
+  check('Scroll preserves viewer while pointer remains on its image', () => assert.equal(panel().hidden, false));
+  thumbnail.mockTop=500; emit('scroll',body); await pause(5);
+  check('Page scroll closes viewer after the source leaves the pointer',()=>assert.equal(panel().hidden,true));
+  thumbnail.mockTop=50;
   await patch({ delay: 35 }); await hover(thumbnail); emit('pointerover', body); await pause(40);
   check('leaving before delay cancels pending viewer', () => assert.equal(panel().hidden, true));
   await patch({ delay: 0 });
@@ -237,6 +248,47 @@ async function hover(el) { emit('pointerover', el); await pause(25); }
   check('AliExpress blocked original falls back to visible thumbnail', () => assert.equal(viewer().querySelector('.image').src, aliThumb));
   check('AliExpress fallback dimensions remain accurate', () => assert.match(viewer().querySelector('.dimensions').textContent, /220 × 220/));
   emit('pointerover', body);
+  const brokenDecodeURL='https://example.test/decode-bad.jpg', renderFallbackURL='https://example.test/decode-good.jpg';
+  probeResponses.set(brokenDecodeURL,{decodeError:true});
+  const undecodable=new Element('img',{src:renderFallbackURL,'data-original':brokenDecodeURL});body.append(undecodable);await hover(undecodable);
+  check('Undecodable image falls back instead of showing an empty viewer',()=>assert.equal(viewer().querySelector('.image').src,renderFallbackURL));
+  emit('pointerover',body);
+  const taintedURL='https://images.other.example/real-photo.jpg';probeResponses.set(taintedURL,{tainted:true});
+  const tainted=new Element('img',{src:taintedURL});body.append(tainted);await hover(tainted);
+  check('Canvas access restrictions do not reject valid cross-origin images',()=>assert.equal(viewer().querySelector('.image').src,taintedURL));
+  emit('pointerover',body);
+  const singleURL='https://example.test/single-request.jpg';probeResponses.set(singleURL,{blockSecondRequest:true});
+  const single=new Element('img',{src:singleURL});body.append(single);await hover(single);
+  check('Viewer displays decoded pixels without a second image request',()=>{const shown=viewer().querySelector('.image');assert.ok(shown.complete&&shown.naturalWidth>0&&shown.decoded);});
+  emit('pointerover',body);
+  const transparentURL='https://example.test/transparent-placeholder.png';probeResponses.set(transparentURL,{transparent:true});
+  const placeholder=new Element('img',{src:renderFallbackURL,'data-original':transparentURL});body.append(placeholder);await hover(placeholder);
+  check('Empty transparent placeholder falls back to the visible source',()=>assert.equal(viewer().querySelector('.image').src,renderFallbackURL));
+  emit('pointerover',body);
+  const slowURL='https://example.test/slow-decode.jpg';probeResponses.set(slowURL,{decodeDelay:55});
+  const slow=new Element('img',{src:slowURL});body.append(slow);emit('pointerover',slow);await pause(15);
+  check('Viewer stays closed until image decoding completes',()=>assert.equal(panel().hidden,true));
+  await pause(65);
+  check('Decoded image appears when ready',()=>assert.equal(panel().hidden,false));
+  const otherScroller=new Element('div');body.append(otherScroller);emit('scroll',otherScroller);await pause(5);
+  check('Unrelated carousel scroll does not close a stationary preview',()=>assert.equal(panel().hidden,false));
+  emit('pointerout',slow,{relatedTarget:null});await pause(5);
+  check('Synthetic pointer exit inside the image does not close preview',()=>assert.equal(panel().hidden,false));
+  await patch({'site:other.example':false,unrelatedCache:1});
+  check('Settings for another site do not close current preview',()=>assert.equal(panel().hidden,false));
+  windowEvents.get('resize')();await pause(5);
+  check('Layout resize preserves preview when pointer remains over image',()=>assert.equal(panel().hidden,false));
+  windowEvents.get('blur')();await pause(5);
+  check('Focus changes inside a visible page do not dismiss the preview',()=>assert.equal(panel().hidden,false));
+  slow.mockTop=500;emit('scroll',body);await pause(5);
+  check('Scrolling the image away still closes its preview',()=>assert.equal(panel().hidden,true));
+  slow.mockTop=50;
+  emit('pointerover',body);await hover(single);
+  emit('pointerout',single,{relatedTarget:null,clientX:-1,clientY:100});
+  check('Leaving the browser viewport still closes preview',()=>assert.equal(panel().hidden,true));
+  emit('pointerover',slow);await pause(10);await hover(single);await pause(65);
+  check('Cancelled decoding cannot replace a newer preview',()=>assert.equal(viewer().querySelector('.image').src,singleURL));
+  emit('pointerover',body);
   check('manifest is v3 with local scripts', () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(base, 'manifest.json')));
     assert.equal(manifest.manifest_version, 3);
